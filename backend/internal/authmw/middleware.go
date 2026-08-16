@@ -72,7 +72,14 @@ func FromContext(ctx context.Context) (*auth.Token, bool) {
 // Role reads the "role" custom claim off a verified token, defaulting to
 // DefaultRole when the claim is absent.
 func Role(token *auth.Token) string {
-	if role, ok := token.Claims["role"].(string); ok && role != "" {
+	return RoleFromClaims(token.Claims)
+}
+
+// RoleFromClaims reads the "role" custom claim out of a raw claims map
+// (token.Claims and a *auth.ExportedUserRecord's CustomClaims are both this
+// same map[string]any shape), defaulting to DefaultRole when absent.
+func RoleFromClaims(claims map[string]any) string {
+	if role, ok := claims["role"].(string); ok && role != "" {
 		return role
 	}
 	return DefaultRole

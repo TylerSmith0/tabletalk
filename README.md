@@ -5,7 +5,7 @@ Monorepo for tabletalk.
 ## Structure
 
 - `backend/` - Go API server; verifies Firebase ID tokens and manages user roles
-- `frontend/` - Web frontend (not yet set up)
+- `frontend/` - Web admin console (React + Vite) for managing users
 - `mobile/` - React Native mobile app, built with [Expo](https://expo.dev)
 
 ## Auth
@@ -32,10 +32,23 @@ npm run start   # then press i (iOS), a (Android), or w (web)
 ## Backend
 
 The `backend/` app is a Go server (`net/http`, no framework) that verifies
-Firebase ID tokens and exposes a role-assignment endpoint for admins.
+Firebase ID tokens and exposes admin endpoints for listing users and
+assigning roles.
 
 ```bash
 cd backend
 cp .env.example .env   # fill in your Firebase Admin SDK credentials
 go run .
+```
+
+## Frontend
+
+The `frontend/` app is a Vite + React + TypeScript admin console: sign in,
+see every user, promote/demote between `admin` and `user`.
+
+```bash
+cd frontend
+cp .env.example .env   # fill in your Firebase web app config
+npm install
+npm run dev
 ```

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"firebase.google.com/go/v4/auth"
+	"google.golang.org/api/iterator"
 
 	"github.com/tylersmith0/tabletalk/backend/internal/authmw"
 )
@@ -41,6 +42,47 @@ func (h *Handlers) Me(w http.ResponseWriter, r *http.Request) {
 		"email": email,
 		"role":  authmw.Role(token),
 	})
+}
+
+type userSummary struct {
+	UID       string `json:"uid"`
+	Email     string `json:"email"`
+	Role      string `json:"role"`
+	Disabled  bool   `json:"disabled"`
+	CreatedAt int64  `json:"createdAt"` // milliseconds since epoch
+}
+
+// ListUsers returns every Firebase user with their role, for the admin
+// console's user table.
+func (h *Handlers) ListUsers(w http.ResponseWriter, r *http.Request) {
+	users := []userSummary{}
+
+	iter := h.AuthClient.Users(r.Context(), "")
+	for {
+		u, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to list users"})
+			return
+		}
+
+		var createdAt int64
+		if u.UserMetadata != nil {
+			createdAt = u.UserMetadata.CreationTimestamp
+		}
+
+		users = append(users, userSummary{
+			UID:       u.UID,
+			Email:     u.Email,
+			Role:      authmw.RoleFromClaims(u.CustomClaims),
+			Disabled:  u.Disabled,
+			CreatedAt: createdAt,
+		})
+	}
+
+	writeJSON(w, http.StatusOK, users)
 }
 
 type setRoleRequest struct {

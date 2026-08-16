@@ -33,6 +33,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", h.Healthz)
 	mux.Handle("GET /api/me", verify(http.HandlerFunc(h.Me)))
+	mux.Handle("GET /api/admin/users", verify(requireAdmin(http.HandlerFunc(h.ListUsers))))
 	mux.Handle("POST /api/admin/set-role", verify(requireAdmin(http.HandlerFunc(h.SetRole))))
 
 	port := os.Getenv("PORT")
@@ -40,8 +41,13 @@ func main() {
 		port = "8080"
 	}
 
-	log.Printf("listening on :%s", port)
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
+	allowedOrigin := os.Getenv("ALLOWED_ORIGIN")
+	if allowedOrigin == "" {
+		allowedOrigin = "http://localhost:5173" // Vite's default dev server origin
+	}
+
+	log.Printf("listening on :%s (allowing requests from %s)", port, allowedOrigin)
+	if err := http.ListenAndServe(":"+port, withCORS(allowedOrigin, mux)); err != nil {
 		log.Fatal(err)
 	}
 }

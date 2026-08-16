@@ -5,11 +5,13 @@ Firebase Auth for identity and roles.
 
 ## What it does
 
-- Verifies Firebase ID tokens sent by the mobile app (`Authorization: Bearer <idToken>`).
+- Verifies Firebase ID tokens sent by the mobile app and admin console
+  (`Authorization: Bearer <idToken>`).
 - Reads the caller's `role` custom claim straight off the verified token -
   no separate users/roles table to keep in sync.
-- Lets an existing admin promote/demote another user via
-  `POST /api/admin/set-role`.
+- Lets an admin list every user (`GET /api/admin/users`) and promote/demote
+  one (`POST /api/admin/set-role`) - what the `frontend/` admin console
+  runs on.
 
 ## Setup
 
@@ -26,7 +28,9 @@ Firebase Auth for identity and roles.
    go run .
    ```
 
-   Listens on `:8080` by default (override with `PORT`).
+   Listens on `:8080` by default (override with `PORT`). Requests from the
+   browser-based admin console need `ALLOWED_ORIGIN` set to that console's
+   origin - defaults to Vite's dev server origin, `http://localhost:5173`.
 
 ## Bootstrapping the first admin
 
@@ -48,6 +52,7 @@ can promote/demote others through the API instead of the CLI.
 |--------|-------------------------|-------------------|------------------------------------------------|
 | GET    | `/healthz`               | none              | Liveness check                                 |
 | GET    | `/api/me`                 | any signed-in user | Returns `{ uid, email, role }` for the caller |
+| GET    | `/api/admin/users`        | admin only        | Returns every user: `{ uid, email, role, disabled, createdAt }[]` |
 | POST   | `/api/admin/set-role`     | admin only        | Body: `{ "uid": "...", "role": "admin"\|"user" }` |
 
 Example, once you have an ID token from the mobile app:
@@ -55,6 +60,9 @@ Example, once you have an ID token from the mobile app:
 ```bash
 curl http://localhost:8080/api/me \
   -H "Authorization: Bearer <idToken>"
+
+curl http://localhost:8080/api/admin/users \
+  -H "Authorization: Bearer <adminIdToken>"
 
 curl -X POST http://localhost:8080/api/admin/set-role \
   -H "Authorization: Bearer <adminIdToken>" \
