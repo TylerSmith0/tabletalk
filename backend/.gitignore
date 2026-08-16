@@ -1,0 +1,9 @@
+# local env / secrets
+.env
+.env.*.local
+serviceAccountKey.json
+*serviceAccountKey*.json
+
+# build output
+/backend
+/setrole
